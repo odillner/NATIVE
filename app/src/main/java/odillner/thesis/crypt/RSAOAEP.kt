@@ -1,65 +1,65 @@
 package odillner.thesis.crypt
 
-import odillner.thesis.utils.DataHelper
-import odillner.thesis.utils.RunResult
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import javax.crypto.Cipher
+import kotlin.math.ceil
 
-class RSAOAEP : Algorithm {
+class RSAOAEP(keySize: Int) : Algorithm {
+    override val algorithm = "RSA"
     override val name = "RSA-OAEP"
-    val keySize = 2048
-    val chunkSize = 214
+    override val configuration = "RSA/None/OAEPWithSHA256AndMGF1Padding"
 
-    private fun generateKeyPair(): KeyPair {
-        val keyGen = KeyPairGenerator.getInstance("RSA")
-        keyGen.initialize(keySize)
+    override val encryptCipher: Cipher = Cipher.getInstance(configuration)
+    override val decryptCipher: Cipher = Cipher.getInstance(configuration)
+    private val keyGenerator = KeyPairGenerator.getInstance(algorithm)
 
-        return keyGen.genKeyPair()
-    }
+    private lateinit var keyPair: KeyPair
 
+     init {
+        keyGenerator.initialize(keySize)
 
-    override fun performRun(data: Array<String>, numberOfRuns: Int): RunResult {
-        val keyPair = generateKeyPair()
-
-        val encryptCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding")
-        val decryptCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding")
+        generateKey()
 
         encryptCipher.init(Cipher.ENCRYPT_MODE, keyPair.public)
         decryptCipher.init(Cipher.DECRYPT_MODE, keyPair.private)
+    }
 
-        val helper = DataHelper()
+    override fun generateKey() {
+        keyPair = keyGenerator.genKeyPair()
+    }
 
-        val res = RunResult(numberOfRuns)
-        val encodedData = helper.encode(data)
-        var decodedData = Array(data.size){""}
+    override fun encrypt(data: ByteArray): ByteArray {
+        val size = encryptCipher.blockSize
+        val len = ceil(data.size.toDouble()/size).toInt()
 
-        for (i in 0 until numberOfRuns) {
-            var start = System.currentTimeMillis()
-            val chunkedData = Array(encodedData.size){helper.chunk(encodedData[it], chunkSize)}
-            val encryptedData = Array(data.size) {
-                it1 -> Array(chunkedData[it1].size) {
-                    it2 -> encryptCipher.doFinal(chunkedData[it1][it2])
-                }
-            }
-            var end = System.currentTimeMillis()
-            res.encryptTimings[i] = end - start
+        val encryptedData = ByteArray(len * decryptCipher.blockSize)
 
-            start = System.currentTimeMillis()
-            val decryptedData = Array(data.size) {
-                it1 -> Array(encryptedData[it1].size) {
-                    it2 -> decryptCipher.doFinal(encryptedData[it1][it2])
-                }
-            }
-            val dechunkedData = Array(data.size){helper.dechunk(decryptedData[it])}
-            end = System.currentTimeMillis()
-            res.decryptTimings[i] = end - start
+        for (i in 0 until len) {
+            val inputOffset = i * size
+            val inputSize = if ((i+1) * size < data.size) size else (data.size - inputOffset)
 
-            decodedData = helper.decode(dechunkedData)
+            encryptCipher.doFinal(data, inputOffset, inputSize, encryptedData, i*decryptCipher.blockSize)
         }
 
-        res.data = decodedData
+        return encryptedData
+    }
 
-        return res
+    override fun decrypt(data: ByteArray): ByteArray {
+        val size = decryptCipher.blockSize
+        val len = ceil(data.size.toDouble()/size).toInt()
+
+        val decryptedData = ByteArray(len * 190)
+
+        var last = 0
+
+        for (i in 0 until len) {
+            val inputOffset = i * size
+            val inputSize = if ((i+1) * size < data.size) size else (data.size - inputOffset)
+
+            last = decryptCipher.doFinal(data, inputOffset, inputSize, decryptedData, i * 190)
+        }
+
+        return decryptedData.copyOfRange(0, (len - 1) * 190 + last)
     }
 }

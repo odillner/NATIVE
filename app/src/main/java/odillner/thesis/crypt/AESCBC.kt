@@ -3,17 +3,17 @@ package odillner.thesis.crypt
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
-import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-class AESGCM(keySize: Int, private val IVSize: Int): Algorithm {
+class AESCBC(keySize: Int, private val IVSize: Int): Algorithm {
     override val algorithm: String = "AES"
-    override val name = "AES-GCM"
-    override val configuration = "AES/GCM/NoPadding"
+    override val name = "AES-CBC"
+    override val configuration = "AES/CBC/PKCS5Padding"
 
     override val encryptCipher: Cipher = Cipher.getInstance(configuration)
     override val decryptCipher: Cipher = Cipher.getInstance(configuration)
-    private val keyGenerator = KeyGenerator.getInstance(algorithm)
+    private val keyGenerator: KeyGenerator = KeyGenerator.getInstance(algorithm)
 
     private lateinit var keySpec: SecretKeySpec
     private lateinit var iv: ByteArray
@@ -45,13 +45,13 @@ class AESGCM(keySize: Int, private val IVSize: Int): Algorithm {
     }
 
     override fun encrypt(data: ByteArray): ByteArray {
-        encryptCipher.init(Cipher.ENCRYPT_MODE, keySpec, GCMParameterSpec(128, getNextIV()))
+        encryptCipher.init(Cipher.ENCRYPT_MODE, keySpec, IvParameterSpec(getNextIV()))
 
         return iv + encryptCipher.doFinal(data)
     }
 
     override fun decrypt(data: ByteArray): ByteArray {
-        decryptCipher.init(Cipher.DECRYPT_MODE, keySpec, GCMParameterSpec(128, data, 0, IVSize))
+        decryptCipher.init(Cipher.DECRYPT_MODE, keySpec, IvParameterSpec(data, 0, IVSize))
 
         return decryptCipher.doFinal(data, IVSize, data.size - IVSize)
     }

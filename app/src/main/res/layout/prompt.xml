@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditText
+        android:id="@+id/encmem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="encmem"
+        />
+
+    <EditText
+        android:id="@+id/enccpu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="enccpu"
+        />
+
+    <EditText
+        android:id="@+id/decmem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="decmem"
+        />
+
+    <EditText
+        android:id="@+id/deccpu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="deccpu"
+        />
+
+
+    <EditText
+        android:id="@+id/keymem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="keymem"
+        />
+
+    <EditText
+        android:id="@+id/keycpu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="keycpu"
+        />
+
+
+</LinearLayout>

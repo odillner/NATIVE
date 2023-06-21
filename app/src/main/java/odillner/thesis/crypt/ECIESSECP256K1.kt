@@ -1,58 +1,32 @@
 package odillner.thesis.crypt
 
-import odillner.thesis.utils.DataHelper
-import odillner.thesis.utils.RunResult
-import org.spongycastle.jce.provider.BouncyCastleProvider
 import java.security.KeyPair
 import java.security.KeyPairGenerator
-import java.security.Security
 import java.security.spec.ECGenParameterSpec
 import javax.crypto.Cipher
 
 class ECIESSECP256K1: Algorithm {
+    override val algorithm = "ECIES"
     override val name = "ECIES-SECP256K1"
+    override val configuration = ""
+    val curve = "secp256k1"
 
-    private fun generateKeyPair(): KeyPair {
-        val gen = KeyPairGenerator.getInstance("ECDH")
-        gen.initialize(ECGenParameterSpec("secp256k1"))
+    override val encryptCipher: Cipher = Cipher.getInstance(algorithm)
+    override val decryptCipher: Cipher = Cipher.getInstance(algorithm)
+    private val keyGenerator = KeyPairGenerator.getInstance("ECDH")
 
-        return gen.genKeyPair()
+    private lateinit var keyPair: KeyPair
+
+    init {
+        keyGenerator.initialize(ECGenParameterSpec(curve))
+
+        generateKey()
+
+        encryptCipher.init(Cipher.ENCRYPT_MODE, keyPair.public)
+        decryptCipher.init(Cipher.DECRYPT_MODE, keyPair.private)
     }
 
-    override fun performRun(data: Array<String>, numberOfRuns: Int): RunResult {
-        Security.removeProvider("BC")
-        Security.insertProviderAt(BouncyCastleProvider(), 1)
-
-        val keyPair = generateKeyPair()
-
-        val encryptCipher = Cipher.getInstance("ECIES")
-        encryptCipher.init(Cipher.ENCRYPT_MODE, keyPair.public)
-
-        val decryptCipher = Cipher.getInstance("ECIES")
-        decryptCipher.init(Cipher.DECRYPT_MODE, keyPair.private)
-
-        val helper = DataHelper()
-
-        val res = RunResult(numberOfRuns)
-        val encodedData = helper.encode(data)
-        var decodedData = Array(data.size){""}
-
-        for (i in 0 until numberOfRuns) {
-            var start = System.currentTimeMillis()
-            val encryptedData = Array(data.size) {encryptCipher.doFinal(encodedData[it])}
-            var end = System.currentTimeMillis()
-            res.encryptTimings[i] = end - start
-
-            start = System.currentTimeMillis()
-            val decryptedData = Array(data.size) {decryptCipher.doFinal(encryptedData[it])}
-            end = System.currentTimeMillis()
-            res.decryptTimings[i] = end - start
-
-            decodedData = helper.decode(decryptedData)
-        }
-
-        res.data = decodedData
-
-        return res
+    override fun generateKey() {
+        keyPair = keyGenerator.genKeyPair()
     }
 }

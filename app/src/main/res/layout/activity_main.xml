@@ -51,6 +51,12 @@
         android:layout_marginTop="160dp"
         android:text="Dataset Size:" />
 
+    <TextView
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="170dp"
+        android:layout_marginTop="160dp"
+        android:text="Number of Threads:" />
 
     <NumberPicker
         android:id="@+id/runPicker"
@@ -68,5 +74,21 @@
         android:layout_marginLeft="90dp"
         />
 
+
+    <NumberPicker
+        android:id="@+id/threadPicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="200dp"
+        android:layout_marginLeft="170dp"
+        />
+
+    <NumberPicker
+        android:id="@+id/algorithmPicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="200dp"
+        android:layout_marginLeft="240dp"
+        />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

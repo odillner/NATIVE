@@ -1,3 +1,5 @@
+/* DTO for storing results */
+
 package odillner.thesis.utils
 
 class RunResult(avgTime: Double, avgMem: Double, avgCPU: Double) {

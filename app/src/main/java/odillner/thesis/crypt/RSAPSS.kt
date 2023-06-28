@@ -33,6 +33,7 @@ class RSAPSS(private val keySize: Int) : Algorithm {
         keyPair = keyGenerator.genKeyPair()
     }
 
+    // verifies and stores signature at the start of data
     override fun encrypt(data: ByteArray): ByteArray {
         signer.update(data)
 
@@ -41,6 +42,7 @@ class RSAPSS(private val keySize: Int) : Algorithm {
         return signature + data
     }
 
+    // extracts signature and verifies data, returns whether or not it was successful
     override fun decrypt(data: ByteArray): ByteArray {
         verifier.update(data, signatureLength, data.size - signatureLength)
         return if (verifier.verify(data, 0, signatureLength)) ByteArray(1){1} else ByteArray(1){0}

@@ -1,3 +1,5 @@
+/* actual benchmarking code, performs benchmarks with a given configuration */
+
 package odillner.thesis.utils
 import kotlinx.coroutines.*
 import kotlin.math.ceil
@@ -5,13 +7,16 @@ import kotlin.math.ceil
 class FullSuite {
     private val helper = DataHelper()
 
+    // helper functions to slice up work between threads
     private fun work(transformation: (data: ByteArray) -> ByteArray, input: Array<ByteArray>, output: Array<ByteArray>, start: Int, end: Int) {
         for (i in start until end) {
             output[i] = transformation(input[i])
         }
     }
 
+    // benchmarking run function, garbage collection calls and sleeps are to increase reliability of metrics
     suspend fun run(name: String, dataSet: Array<String>, numberOfRuns: Int, numberOfThreads: Int): Array<Double> {
+        // fetch algorithm, set up arrays to store results in and encodes dataset
         val algorithms = Array(numberOfThreads) {helper.algorithmFromName(name)}
 
         val dataSetSize = dataSet.size
@@ -26,25 +31,25 @@ class FullSuite {
 
         println("Running $name...")
 
+        // key generation benchmarking
         println("Starting key generation...")
 
-        if (name != "RSA-PSS") {
-            for (j in 0 until numberOfRuns) {
-                val startTime = System.currentTimeMillis()
+        for (j in 0 until numberOfRuns) {
+            val startTime = System.currentTimeMillis()
 
-                val jobs = Array(numberOfThreads) { it1 ->
-                    GlobalScope.launch {
-                        repeat(sliceSize) {
-                            algorithms[it1].generateKey()
-                        }
+            // launches slice of work to a given number of threads
+            val jobs = Array(numberOfThreads) { it1 ->
+                GlobalScope.launch {
+                    repeat(sliceSize) {
+                        algorithms[it1].generateKey()
                     }
                 }
-
-                jobs.forEach { job -> job.join() }
-
-                timings[j] = System.currentTimeMillis() - startTime
-                System.gc()
             }
+
+            jobs.forEach { job -> job.join() }
+
+            timings[j] = System.currentTimeMillis() - startTime
+            System.gc()
         }
 
         val keyGenTimings = timings.average()
@@ -55,11 +60,13 @@ class FullSuite {
 
         delay(1000)
 
+        // encryption benchmarking
         println("Starting encryption...")
 
         for (j in 0 until numberOfRuns) {
             val startTime = System.currentTimeMillis()
 
+            // launches slice of work to a given number of threads
             val jobs = Array(numberOfThreads){ GlobalScope.launch {
                 val start = it*sliceSize
                 val end = (it+1) * sliceSize
@@ -81,11 +88,13 @@ class FullSuite {
 
         delay(1000)
 
+        // decryption benchmarking
         println("Starting decryption...")
 
         for (j in 0 until numberOfRuns) {
             val startTime = System.currentTimeMillis()
 
+            // launches slice of work to a given number of threads
             val jobs = Array(numberOfThreads){ GlobalScope.launch {
                 val start = it*sliceSize
                 val end = (it+1) * sliceSize
@@ -103,6 +112,7 @@ class FullSuite {
 
         println("Encryption: $decryptTimings")
 
+        // checks if results are correct
         if (name == "ECDSA-P521" || name == "RSA-PSS") {
             if (decryptedData.all {it contentEquals ByteArray(1){1}}) {
                 println("Encrypted and decrypted data matches original dataset")

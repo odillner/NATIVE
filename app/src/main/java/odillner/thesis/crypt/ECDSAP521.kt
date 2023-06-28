@@ -34,6 +34,7 @@ class ECDSAP521: Algorithm {
         keyPair = keyGenerator.genKeyPair()
     }
 
+    // verifies given data, stores signature length in first byte followed by signature followed by data
     override fun encrypt(data: ByteArray): ByteArray {
         signer.update(data)
 
@@ -42,6 +43,7 @@ class ECDSAP521: Algorithm {
         return ByteArray(1){(signature.size - 128).toByte()} + signature + data
     }
 
+    // extracts signature and verifies data, returns whether or not it was successful
     override fun decrypt(data: ByteArray): ByteArray {
         val signatureLength = data[0].toInt() + 128
 

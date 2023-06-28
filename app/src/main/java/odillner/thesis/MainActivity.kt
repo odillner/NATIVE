@@ -1,3 +1,5 @@
+/* frontend for interacting with benchmarking module */
+
 package odillner.thesis
 
 import android.app.Activity
@@ -37,11 +39,14 @@ class MainActivity : Activity() {
     private var algorithmNames = arrayOf("AES-CBC", "AES-CTR", "AES-GCM", "BF-CBC", "ECIES-SECP256K1", "RSA-OAEP", "ECDSA-P521", "RSA-PSS")
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // set up bouncy castle provider for JCA
         Security.removeProvider("BC")
         Security.insertProviderAt(BouncyCastleProvider(), 1)
 
+        // allow networking on main thread
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().permitAll().build())
 
+        // ui code
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -87,6 +92,7 @@ class MainActivity : Activity() {
             algorithm = algorithmNames[newVal]
         }
 
+        // ugly way to prompt for supplemental data and suspend until supplied
         fun prompt(encrypt: Double, decrypt: Double, keygen: Double) {
             val builder = AlertDialog.Builder(this)
             val inflater = layoutInflater
@@ -125,6 +131,7 @@ class MainActivity : Activity() {
             builder.show()
         }
 
+        // start benchmark run with given configurations
         encryptButton.setOnClickListener {
             CoroutineScope(Dispatchers.Default).launch {
                 val res = FullSuite().run(

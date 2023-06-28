@@ -1,3 +1,5 @@
+/* contains various helpers functions */
+
 package odillner.thesis.utils
 
 import android.content.Context
@@ -9,6 +11,8 @@ import org.json.JSONObject
 
 
 class DataHelper {
+
+    // encoding and decoding of data
     fun encode(data: Array<String>) : Array<ByteArray> {
         return Array(data.size){data[it].toByteArray()}
     }
@@ -17,11 +21,13 @@ class DataHelper {
         return Array(data.size){String(data[it])}
     }
 
+    // fetches and formats dataset for usage
     fun fetchDataSet(context: Context, size: Int) : Array<String> {
         val fileContent = context.assets.open("${size}.json").bufferedReader().use {it.readText()}.split("}}},").toTypedArray()
         return Array(fileContent.size){fileContent[it] + "}}}"}
     }
 
+    // returns an algorithm object associated with a given name
     fun algorithmFromName(name: String): Algorithm {
         when (name) {
             "AES-CBC" -> return AESCBC(256, 16)
@@ -37,6 +43,7 @@ class DataHelper {
         return AESCBC(256, 16)
     }
 
+    // upload the results to central storage
     fun uploadResult(encryptRes: RunResult, decryptRes: RunResult, keyGenResult: RunResult, algorithmName: String, dataSetSize: Int, numberOfRuns: Int) {
         val body = JSONObject()
 

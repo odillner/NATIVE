@@ -29,6 +29,7 @@ class RSAOAEP(keySize: Int) : Algorithm {
         keyPair = keyGenerator.genKeyPair()
     }
 
+    // encrypts data in chunks
     override fun encrypt(data: ByteArray): ByteArray {
         val size = encryptCipher.blockSize
         val len = ceil(data.size.toDouble()/size).toInt()
@@ -45,6 +46,7 @@ class RSAOAEP(keySize: Int) : Algorithm {
         return encryptedData
     }
 
+    // decrypts data in chunks
     override fun decrypt(data: ByteArray): ByteArray {
         val size = decryptCipher.blockSize
         val len = ceil(data.size.toDouble()/size).toInt()
